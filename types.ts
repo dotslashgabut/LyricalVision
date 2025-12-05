@@ -13,6 +13,28 @@ export interface Stanza {
   error?: string;
 }
 
+export interface ImageModel {
+  id: string;
+  name: string;
+  description: string;
+  badge?: string;
+}
+
+export const IMAGE_MODELS: ImageModel[] = [
+  {
+    id: 'gemini-3-pro-image-preview',
+    name: 'Gemini 3.0 Pro',
+    description: 'High quality, better prompt adherence, detailed textures.',
+    badge: 'Pro'
+  },
+  {
+    id: 'gemini-2.5-flash-image',
+    name: 'Gemini 2.5 Flash',
+    description: 'Faster generation, good for quick visualizations.',
+    badge: 'Fast'
+  }
+];
+
 export const ART_STYLES: ArtStyle[] = [
   {
     id: 'cinematic',

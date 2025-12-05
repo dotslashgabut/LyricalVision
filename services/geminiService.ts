@@ -1,16 +1,19 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
-
 export const generateStanzaImage = async (
   lyrics: string,
   stylePrompt: string,
-  contextPrompt: string
+  contextPrompt: string,
+  modelId: string
 ): Promise<string> => {
+  const apiKey = process.env.API_KEY;
+
   if (!apiKey) {
-    throw new Error("API Key is missing.");
+    throw new Error("API Key is missing. Please select an API Key.");
   }
+
+  // Create a new instance for each request to ensure the latest API key is used
+  const ai = new GoogleGenAI({ apiKey });
 
   // Construct a prompt that enforces consistency and visualizes the lyrics
   const fullPrompt = `
@@ -24,13 +27,26 @@ export const generateStanzaImage = async (
     High quality, detailed.
   `;
 
+  // Configure image options based on the model
+  const imageConfig: any = {
+      aspectRatio: '1:1'
+  };
+
+  // 'imageSize' is only supported by gemini-3-pro-image-preview
+  if (modelId === 'gemini-3-pro-image-preview') {
+      imageConfig.imageSize = '1K';
+  }
+
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: modelId,
       contents: {
         parts: [
           { text: fullPrompt }
         ]
+      },
+      config: {
+        imageConfig
       }
     });
 

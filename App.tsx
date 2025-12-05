@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import StyleSelector from './components/StyleSelector';
 import StanzaCard from './components/StanzaCard';
-import { ART_STYLES, Stanza } from './types';
+import { ART_STYLES, Stanza, IMAGE_MODELS } from './types';
 import { generateStanzaImage } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -10,8 +10,35 @@ const App: React.FC = () => {
   const [contextInput, setContextInput] = useState<string>('');
   const [stanzas, setStanzas] = useState<Stanza[]>([]);
   const [selectedStyleId, setSelectedStyleId] = useState<string>(ART_STYLES[0].id);
+  const [selectedModelId, setSelectedModelId] = useState<string>(IMAGE_MODELS[0].id);
   const [customStylePrompt, setCustomStylePrompt] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkApiKey = async () => {
+        const aistudio = (window as any).aistudio;
+        if (aistudio && aistudio.hasSelectedApiKey) {
+            const hasKey = await aistudio.hasSelectedApiKey();
+            setHasApiKey(hasKey);
+        } else {
+            // Fallback for dev environments without the window.aistudio object
+            if (process.env.API_KEY) {
+                setHasApiKey(true);
+            }
+        }
+    };
+    checkApiKey();
+  }, []);
+
+  const handleSelectKey = async () => {
+      const aistudio = (window as any).aistudio;
+      if (aistudio && aistudio.openSelectKey) {
+          await aistudio.openSelectKey();
+          // Assume success to avoid race conditions as per documentation
+          setHasApiKey(true);
+      }
+  };
 
   // Split lyrics into stanzas based on double newlines
   const handleProcessLyrics = () => {
@@ -41,6 +68,16 @@ const App: React.FC = () => {
   };
 
   const handleGenerateImage = useCallback(async (stanzaId: string) => {
+    // If we somehow lost the key state, or to be safe, we could check here, 
+    // but the service handles the check against process.env.API_KEY.
+    if (!hasApiKey) {
+        await handleSelectKey();
+        // Return and let the user click again or proceed? 
+        // For smoother UX, let's just proceed if key was selected.
+        // But since handleSelectKey is async and we need to wait for user interaction,
+        // we essentially pause here. If they cancel, we might fail downstream.
+    }
+
     const stanza = stanzas.find(s => s.id === stanzaId);
     if (!stanza) return;
 
@@ -62,7 +99,8 @@ const App: React.FC = () => {
       const base64Image = await generateStanzaImage(
         stanza.text,
         stylePrompt,
-        contextInput
+        contextInput,
+        selectedModelId
       );
 
       setStanzas(prev => prev.map(s => 
@@ -70,10 +108,10 @@ const App: React.FC = () => {
       ));
     } catch (error: any) {
       setStanzas(prev => prev.map(s => 
-        s.id === stanzaId ? { ...s, isLoading: false, error: "Failed to generate. Try again." } : s
+        s.id === stanzaId ? { ...s, isLoading: false, error: error.message || "Failed to generate. Try again." } : s
       ));
     }
-  }, [stanzas, selectedStyleId, customStylePrompt, contextInput]);
+  }, [stanzas, selectedStyleId, customStylePrompt, contextInput, selectedModelId, hasApiKey]);
 
   const handleClear = () => {
     setStanzas([]);
@@ -95,14 +133,22 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold text-white tracking-tight">Lyrical Vision</h1>
           </div>
-          {stanzas.length > 0 && (
-            <button 
-                onClick={handleClear}
-                className="text-xs md:text-sm font-medium text-slate-400 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-full"
-            >
-                New Project
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+             {/* Key Status Indicator */}
+             {!hasApiKey && (
+                 <button onClick={handleSelectKey} className="text-xs text-amber-400 hover:text-amber-300 font-medium px-2 py-1 rounded border border-amber-500/30 bg-amber-500/10">
+                    ⚠ Select API Key
+                 </button>
+             )}
+            {stanzas.length > 0 && (
+                <button 
+                    onClick={handleClear}
+                    className="text-xs md:text-sm font-medium text-slate-400 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-full"
+                >
+                    New Project
+                </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -116,7 +162,7 @@ const App: React.FC = () => {
                 Turn your music into <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">visual art</span>.
               </h2>
               <p className="text-slate-400 max-w-lg mx-auto">
-                Select a style, provide context, paste your lyrics, and generate consistent imagery for every stanza.
+                Select a style, provide context, paste your lyrics, and generate consistent imagery using Gemini.
               </p>
             </div>
 
@@ -129,11 +175,50 @@ const App: React.FC = () => {
                   onCustomStyleChange={setCustomStylePrompt}
                 />
             </div>
+            
+            <div className="mb-6">
+                <label className="block text-slate-300 text-sm font-semibold mb-2">2. Select Image Model</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {IMAGE_MODELS.map(model => (
+                    <button
+                      key={model.id}
+                      onClick={() => setSelectedModelId(model.id)}
+                      className={`
+                        p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden group
+                        ${selectedModelId === model.id 
+                          ? 'border-purple-500 bg-slate-800 shadow-lg shadow-purple-900/20' 
+                          : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'}
+                      `}
+                    >
+                      <div className="flex items-center justify-between mb-1 relative z-10">
+                        <span className={`font-bold ${selectedModelId === model.id ? 'text-white' : 'text-slate-300'}`}>
+                          {model.name}
+                        </span>
+                        {model.badge && (
+                          <span className={`
+                            text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider
+                            ${model.badge === 'Pro' 
+                              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black' 
+                              : 'bg-slate-600 text-slate-200'}
+                          `}>
+                            {model.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 relative z-10">{model.description}</p>
+                      
+                      {selectedModelId === model.id && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 z-0"></div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+            </div>
 
             <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
               <div className="mb-6">
                  <label className="block text-slate-300 text-sm font-semibold mb-2">
-                    2. Visual Context (Optional)
+                    3. Visual Context (Optional)
                     <span className="block text-xs font-normal text-slate-500 mt-1">Helps keep images consistent (e.g., "A lonely astronaut on Mars", "Neon Tokyo in rain").</span>
                  </label>
                  <input 
@@ -147,7 +232,7 @@ const App: React.FC = () => {
 
               <div className="mb-6">
                 <label className="block text-slate-300 text-sm font-semibold mb-2">
-                  3. Song Lyrics
+                  4. Song Lyrics
                   <span className="block text-xs font-normal text-slate-500 mt-1">Separate stanzas with an empty line.</span>
                 </label>
                 <textarea
@@ -163,13 +248,32 @@ And I know...`}
                 />
               </div>
 
-              <button
-                onClick={handleProcessLyrics}
-                disabled={!lyricsInput.trim() || isProcessing}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/20"
-              >
-                Start Visualizing
-              </button>
+              {!hasApiKey ? (
+                 <button
+                    onClick={handleSelectKey}
+                    className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-amber-900/20 flex items-center justify-center gap-2"
+                 >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Select API Key to Continue
+                 </button>
+              ) : (
+                 <button
+                    onClick={handleProcessLyrics}
+                    disabled={!lyricsInput.trim() || isProcessing}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-900/20"
+                 >
+                    Start Visualizing
+                 </button>
+              )}
+              
+              {!hasApiKey && (
+                  <div className="mt-4 text-center text-xs text-slate-500">
+                    <p>To use the high-quality Gemini 3.0 Pro Image model, you must select a paid API key.</p>
+                    <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-purple-400 hover:text-purple-300 underline mt-1 inline-block">View Billing Documentation</a>
+                  </div>
+              )}
             </div>
           </div>
         ) : (
@@ -183,8 +287,23 @@ And I know...`}
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 10v6.178A2 2 0 1110 14.243zm0-4.636l2.828-2.829 1.415 1.415L11.414 11H10v-1.393z" clipRule="evenodd" />
                             </svg>
-                            Style Settings
+                            Style & Model
                         </div>
+                        {/* Compact Model Selector in Header */}
+                         <div className="flex bg-slate-800 rounded-lg p-0.5">
+                           {IMAGE_MODELS.map(model => (
+                             <button
+                               key={model.id}
+                               onClick={() => setSelectedModelId(model.id)}
+                               className={`
+                                 text-[10px] px-2 py-1 rounded-md font-medium transition-all
+                                 ${selectedModelId === model.id ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}
+                               `}
+                             >
+                               {model.badge || model.name.split(' ')[2]}
+                             </button>
+                           ))}
+                         </div>
                      </div>
                     
                     <StyleSelector 
@@ -223,7 +342,7 @@ And I know...`}
             </div>
             
             <div className="text-center text-slate-500 text-xs mt-12 pb-8">
-                Generated with Gemini AI • {stanzas.length} Stanzas
+                Generated with {IMAGE_MODELS.find(m => m.id === selectedModelId)?.name} • {stanzas.length} Stanzas
             </div>
           </div>
         )}
