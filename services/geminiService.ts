@@ -4,7 +4,8 @@ export const generateStanzaImage = async (
   lyrics: string,
   stylePrompt: string,
   contextPrompt: string,
-  modelId: string
+  modelId: string,
+  aspectRatio: string
 ): Promise<string> => {
   const apiKey = process.env.API_KEY;
 
@@ -29,7 +30,7 @@ export const generateStanzaImage = async (
 
   // Configure image options based on the model
   const imageConfig: any = {
-      aspectRatio: '1:1'
+      aspectRatio: aspectRatio
   };
 
   // 'imageSize' is only supported by gemini-3-pro-image-preview

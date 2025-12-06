@@ -35,6 +35,9 @@ export const IMAGE_MODELS: ImageModel[] = [
   }
 ];
 
+export const ASPECT_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4'] as const;
+export type AspectRatio = typeof ASPECT_RATIOS[number];
+
 export const ART_STYLES: ArtStyle[] = [
   {
     id: 'cinematic',

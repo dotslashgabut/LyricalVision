@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import StyleSelector from './components/StyleSelector';
 import StanzaCard from './components/StanzaCard';
-import { ART_STYLES, Stanza, IMAGE_MODELS } from './types';
+import { ART_STYLES, Stanza, IMAGE_MODELS, ASPECT_RATIOS, AspectRatio } from './types';
 import { generateStanzaImage } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -11,6 +11,7 @@ const App: React.FC = () => {
   const [stanzas, setStanzas] = useState<Stanza[]>([]);
   const [selectedStyleId, setSelectedStyleId] = useState<string>(ART_STYLES[0].id);
   const [selectedModelId, setSelectedModelId] = useState<string>(IMAGE_MODELS[0].id);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>('1:1');
   const [customStylePrompt, setCustomStylePrompt] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [hasApiKey, setHasApiKey] = useState<boolean>(false);
@@ -100,7 +101,8 @@ const App: React.FC = () => {
         stanza.text,
         stylePrompt,
         contextInput,
-        selectedModelId
+        selectedModelId,
+        selectedAspectRatio
       );
 
       setStanzas(prev => prev.map(s => 
@@ -111,7 +113,7 @@ const App: React.FC = () => {
         s.id === stanzaId ? { ...s, isLoading: false, error: error.message || "Failed to generate. Try again." } : s
       ));
     }
-  }, [stanzas, selectedStyleId, customStylePrompt, contextInput, selectedModelId, hasApiKey]);
+  }, [stanzas, selectedStyleId, customStylePrompt, contextInput, selectedModelId, selectedAspectRatio, hasApiKey]);
 
   const handleClear = () => {
     setStanzas([]);
@@ -177,41 +179,70 @@ const App: React.FC = () => {
             </div>
             
             <div className="mb-6">
-                <label className="block text-slate-300 text-sm font-semibold mb-2">2. Select Image Model</label>
+                <label className="block text-slate-300 text-sm font-semibold mb-2">2. Generation Settings</label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {IMAGE_MODELS.map(model => (
-                    <button
-                      key={model.id}
-                      onClick={() => setSelectedModelId(model.id)}
-                      className={`
-                        p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden group
-                        ${selectedModelId === model.id 
-                          ? 'border-purple-500 bg-slate-800 shadow-lg shadow-purple-900/20' 
-                          : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'}
-                      `}
-                    >
-                      <div className="flex items-center justify-between mb-1 relative z-10">
-                        <span className={`font-bold ${selectedModelId === model.id ? 'text-white' : 'text-slate-300'}`}>
-                          {model.name}
-                        </span>
-                        {model.badge && (
-                          <span className={`
-                            text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider
-                            ${model.badge === 'Pro' 
-                              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black' 
-                              : 'bg-slate-600 text-slate-200'}
-                          `}>
-                            {model.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-400 relative z-10">{model.description}</p>
-                      
-                      {selectedModelId === model.id && (
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 z-0"></div>
-                      )}
-                    </button>
-                  ))}
+                  {/* Model Selector */}
+                  <div className="space-y-2">
+                     <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Model</span>
+                     <div className="grid grid-cols-1 gap-2">
+                      {IMAGE_MODELS.map(model => (
+                        <button
+                          key={model.id}
+                          onClick={() => setSelectedModelId(model.id)}
+                          className={`
+                            px-4 py-3 rounded-xl border transition-all relative overflow-hidden flex items-center justify-between
+                            ${selectedModelId === model.id 
+                              ? 'border-purple-500 bg-slate-800 shadow-lg shadow-purple-900/10' 
+                              : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'}
+                          `}
+                        >
+                           <div className="flex flex-col items-start">
+                             <span className={`font-bold text-sm ${selectedModelId === model.id ? 'text-white' : 'text-slate-300'}`}>
+                                {model.name}
+                             </span>
+                             <span className="text-[10px] text-slate-400">{model.description.split(',')[0]}</span>
+                           </div>
+                           {model.badge && (
+                              <span className={`
+                                text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ml-2
+                                ${model.badge === 'Pro' 
+                                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black' 
+                                  : 'bg-slate-600 text-slate-200'}
+                              `}>
+                                {model.badge}
+                              </span>
+                            )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Aspect Ratio Selector */}
+                  <div className="space-y-2">
+                     <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Aspect Ratio</span>
+                     <div className="flex flex-wrap gap-2">
+                        {ASPECT_RATIOS.map(ratio => (
+                            <button
+                                key={ratio}
+                                onClick={() => setSelectedAspectRatio(ratio)}
+                                className={`
+                                    flex-1 min-w-[60px] h-[50px] rounded-xl border flex flex-col items-center justify-center transition-all
+                                    ${selectedAspectRatio === ratio 
+                                        ? 'bg-slate-800 border-purple-500 text-white shadow-lg shadow-purple-900/10' 
+                                        : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'}
+                                `}
+                            >
+                                <span className="text-sm font-bold">{ratio}</span>
+                                <span className="text-[9px] opacity-60">
+                                    {ratio === '1:1' ? 'Square' : 
+                                     ratio === '16:9' ? 'Landscape' : 
+                                     ratio === '9:16' ? 'Portrait' : 
+                                     ratio === '4:3' ? 'Classic' : 'Tall'}
+                                </span>
+                            </button>
+                        ))}
+                     </div>
+                  </div>
                 </div>
             </div>
 
@@ -287,22 +318,43 @@ And I know...`}
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 10v6.178A2 2 0 1110 14.243zm0-4.636l2.828-2.829 1.415 1.415L11.414 11H10v-1.393z" clipRule="evenodd" />
                             </svg>
-                            Style & Model
+                            Settings
                         </div>
-                        {/* Compact Model Selector in Header */}
-                         <div className="flex bg-slate-800 rounded-lg p-0.5">
-                           {IMAGE_MODELS.map(model => (
-                             <button
-                               key={model.id}
-                               onClick={() => setSelectedModelId(model.id)}
-                               className={`
-                                 text-[10px] px-2 py-1 rounded-md font-medium transition-all
-                                 ${selectedModelId === model.id ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}
-                               `}
-                             >
-                               {model.badge || model.name.split(' ')[2]}
-                             </button>
-                           ))}
+                        {/* Compact Settings in Header */}
+                         <div className="flex items-center gap-2">
+                             {/* Model Selector */}
+                             <div className="flex bg-slate-800 rounded-lg p-0.5">
+                               {IMAGE_MODELS.map(model => (
+                                 <button
+                                   key={model.id}
+                                   onClick={() => setSelectedModelId(model.id)}
+                                   className={`
+                                     text-[10px] px-2 py-1 rounded-md font-medium transition-all
+                                     ${selectedModelId === model.id ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}
+                                   `}
+                                 >
+                                   {model.badge || model.name.split(' ')[2]}
+                                 </button>
+                               ))}
+                             </div>
+
+                             <div className="w-px h-4 bg-slate-700 mx-1"></div>
+
+                             {/* Aspect Ratio Selector */}
+                             <div className="flex bg-slate-800 rounded-lg p-0.5">
+                               {ASPECT_RATIOS.map(ratio => (
+                                 <button
+                                   key={ratio}
+                                   onClick={() => setSelectedAspectRatio(ratio)}
+                                   className={`
+                                     text-[10px] px-2 py-1 rounded-md font-medium transition-all
+                                     ${selectedAspectRatio === ratio ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}
+                                   `}
+                                 >
+                                   {ratio}
+                                 </button>
+                               ))}
+                             </div>
                          </div>
                      </div>
                     
@@ -342,7 +394,7 @@ And I know...`}
             </div>
             
             <div className="text-center text-slate-500 text-xs mt-12 pb-8">
-                Generated with {IMAGE_MODELS.find(m => m.id === selectedModelId)?.name} • {stanzas.length} Stanzas
+                Generated with {IMAGE_MODELS.find(m => m.id === selectedModelId)?.name} • {selectedAspectRatio} • {stanzas.length} Stanzas
             </div>
           </div>
         )}
