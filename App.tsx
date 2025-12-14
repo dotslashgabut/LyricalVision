@@ -24,6 +24,9 @@ const App: React.FC = () => {
         if (aistudio && aistudio.hasSelectedApiKey) {
             const hasKey = await aistudio.hasSelectedApiKey();
             setHasSelectedKey(hasKey);
+        } else if (process.env.API_KEY) {
+            // Support local development where API_KEY is set in environment variables
+            setHasSelectedKey(true);
         }
     };
     checkApiKey();
