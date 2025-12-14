@@ -14,19 +14,16 @@ const App: React.FC = () => {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>('1:1');
   const [customStylePrompt, setCustomStylePrompt] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
+  
+  // 'hasSelectedKey' tracks if the user specifically chose a paid key (required for Pro)
+  const [hasSelectedKey, setHasSelectedKey] = useState<boolean>(false);
 
   useEffect(() => {
     const checkApiKey = async () => {
         const aistudio = (window as any).aistudio;
         if (aistudio && aistudio.hasSelectedApiKey) {
             const hasKey = await aistudio.hasSelectedApiKey();
-            setHasApiKey(hasKey);
-        } else {
-            // Fallback for dev environments without the window.aistudio object
-            if (process.env.API_KEY) {
-                setHasApiKey(true);
-            }
+            setHasSelectedKey(hasKey);
         }
     };
     checkApiKey();
@@ -36,10 +33,13 @@ const App: React.FC = () => {
       const aistudio = (window as any).aistudio;
       if (aistudio && aistudio.openSelectKey) {
           await aistudio.openSelectKey();
-          // Assume success to avoid race conditions as per documentation
-          setHasApiKey(true);
+          setHasSelectedKey(true);
       }
   };
+
+  // Determine if we need to enforce the paid key check
+  const isProModel = selectedModelId === 'gemini-3-pro-image-preview';
+  const requiresKeySelection = isProModel && !hasSelectedKey;
 
   // Split lyrics into stanzas based on double newlines
   const handleProcessLyrics = () => {
@@ -69,14 +69,12 @@ const App: React.FC = () => {
   };
 
   const handleGenerateImage = useCallback(async (stanzaId: string) => {
-    // If we somehow lost the key state, or to be safe, we could check here, 
-    // but the service handles the check against process.env.API_KEY.
-    if (!hasApiKey) {
+    // Only block generation if using Pro model without a selected key
+    if (selectedModelId === 'gemini-3-pro-image-preview' && !hasSelectedKey) {
         await handleSelectKey();
-        // Return and let the user click again or proceed? 
-        // For smoother UX, let's just proceed if key was selected.
-        // But since handleSelectKey is async and we need to wait for user interaction,
-        // we essentially pause here. If they cancel, we might fail downstream.
+        // Since key selection is async and might be cancelled, we pause here.
+        // If successful, the user can click generate again.
+        return;
     }
 
     const stanza = stanzas.find(s => s.id === stanzaId);
@@ -113,7 +111,7 @@ const App: React.FC = () => {
         s.id === stanzaId ? { ...s, isLoading: false, error: error.message || "Failed to generate. Try again." } : s
       ));
     }
-  }, [stanzas, selectedStyleId, customStylePrompt, contextInput, selectedModelId, selectedAspectRatio, hasApiKey]);
+  }, [stanzas, selectedStyleId, customStylePrompt, contextInput, selectedModelId, selectedAspectRatio, hasSelectedKey]);
 
   const handleClear = () => {
     setStanzas([]);
@@ -136,8 +134,8 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-white tracking-tight">Lyrical Vision</h1>
           </div>
           <div className="flex items-center gap-3">
-             {/* Key Status Indicator */}
-             {!hasApiKey && (
+             {/* Key Status Indicator - Only show if Pro is selected and no key */}
+             {requiresKeySelection && (
                  <button onClick={handleSelectKey} className="text-xs text-amber-400 hover:text-amber-300 font-medium px-2 py-1 rounded border border-amber-500/30 bg-amber-500/10">
                     ⚠ Select API Key
                  </button>
@@ -279,7 +277,8 @@ And I know...`}
                 />
               </div>
 
-              {!hasApiKey ? (
+              {/* Dynamic Button: Changes based on Model Requirement */}
+              {requiresKeySelection ? (
                  <button
                     onClick={handleSelectKey}
                     className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-amber-900/20 flex items-center justify-center gap-2"
@@ -287,7 +286,7 @@ And I know...`}
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    Select API Key to Continue
+                    Select API Key for Pro Model
                  </button>
               ) : (
                  <button
@@ -299,7 +298,7 @@ And I know...`}
                  </button>
               )}
               
-              {!hasApiKey && (
+              {requiresKeySelection && (
                   <div className="mt-4 text-center text-xs text-slate-500">
                     <p>To use the high-quality Gemini 3.0 Pro Image model, you must select a paid API key.</p>
                     <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-purple-400 hover:text-purple-300 underline mt-1 inline-block">View Billing Documentation</a>
@@ -378,6 +377,14 @@ And I know...`}
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                      </div>
+                     
+                     {/* Warning if switching to Pro without key in results view */}
+                     {requiresKeySelection && (
+                         <div className="bg-amber-900/30 border border-amber-500/30 rounded p-2 flex items-center justify-between">
+                            <span className="text-xs text-amber-200">Gemini 3.0 Pro requires a paid API key.</span>
+                            <button onClick={handleSelectKey} className="text-xs bg-amber-600 hover:bg-amber-500 text-white px-2 py-1 rounded">Select Key</button>
+                         </div>
+                     )}
                 </div>
              </div>
 
