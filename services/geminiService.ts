@@ -4,8 +4,10 @@ export const generateStanzaImage = async (
   lyrics: string,
   stylePrompt: string,
   contextPrompt: string,
+  subjectPrompt: string,
   modelId: string,
-  aspectRatio: string
+  aspectRatio: string,
+  referenceImages?: { data: string; mimeType: string }[]
 ): Promise<string> => {
   const apiKey = process.env.API_KEY;
 
@@ -13,49 +15,60 @@ export const generateStanzaImage = async (
     throw new Error("API Key is missing. Please select an API Key.");
   }
 
-  // Create a new instance for each request to ensure the latest API key is used
   const ai = new GoogleGenAI({ apiKey });
 
-  // Construct a prompt that enforces consistency and visualizes the lyrics
-  const fullPrompt = `
-    Create an image based on the following art style: ${stylePrompt}.
+  // Base prompt instructions
+  const textPrompt = `
+    ART STYLE: ${stylePrompt}
+    GLOBAL THEME/ENVIRONMENT: ${contextPrompt || 'Consistent aesthetic'}
+    MAIN CHARACTER/SUBJECT: ${subjectPrompt || 'Consistent with previous scenes'}
     
-    Context/Theme of the entire song: ${contextPrompt || 'Open interpretation'}.
+    CURRENT SCENE LYRICS: "${lyrics}"
     
-    Specific Scene Description based on these lyrics: "${lyrics}".
-    
-    Ensure the image visualizes the lyrics metaphorically or literally, fitting the requested style.
-    High quality, detailed.
+    INSTRUCTIONS:
+    1. Create a visual representation of the provided lyrics.
+    ${referenceImages && referenceImages.length > 0 ? `2. USE THE ATTACHED ${referenceImages.length} REFERENCE IMAGES as the primary sources for character design, clothing, environment details, and visual style. Synthesize elements from these images.` : "2. Maintain visual continuity with the main subject and theme."}
+    3. Use a consistent color palette and lighting style.
+    4. Ensure this image feels like part of a coherent visual series.
+    5. High quality, stylistic, and evocative.
   `;
 
-  // Configure image options based on the model
   const imageConfig: any = {
       aspectRatio: aspectRatio
   };
 
-  // 'imageSize' is only supported by gemini-3-pro-image-preview
   if (modelId === 'gemini-3-pro-image-preview') {
       imageConfig.imageSize = '1K';
   }
 
+  const parts: any[] = [];
+  
+  // Add reference images if provided
+  if (referenceImages && referenceImages.length > 0) {
+    referenceImages.forEach(img => {
+      parts.push({
+        inlineData: {
+          data: img.data,
+          mimeType: img.mimeType
+        }
+      });
+    });
+  }
+
+  // Add the text prompt at the end
+  parts.push({ text: textPrompt });
+
   try {
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: {
-        parts: [
-          { text: fullPrompt }
-        ]
-      },
-      config: {
-        imageConfig
-      }
+      contents: { parts },
+      config: { imageConfig }
     });
 
-    // Iterate through parts to find the image
     const candidates = response.candidates;
     if (candidates && candidates.length > 0) {
-      const parts = candidates[0].content.parts;
-      for (const part of parts) {
+      const resultParts = candidates[0].content.parts;
+      for (const part of resultParts) {
         if (part.inlineData) {
           const base64Data = part.inlineData.data;
           const mimeType = part.inlineData.mimeType || 'image/png';

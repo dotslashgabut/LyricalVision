@@ -24,13 +24,13 @@ export const IMAGE_MODELS: ImageModel[] = [
   {
     id: 'gemini-2.5-flash-image',
     name: 'Gemini 2.5 Flash',
-    description: 'Faster generation, good for quick visualizations.',
-    badge: 'Fast'
+    description: 'Standard (Free Tier equivalent). Fast and efficient for most song visualizations.',
+    badge: 'Standard'
   },
   {
     id: 'gemini-3-pro-image-preview',
     name: 'Gemini 3.0 Pro',
-    description: 'High quality, better prompt adherence, detailed textures.',
+    description: 'Advanced (Paid Key required). High-fidelity, better prompt adherence and detail.',
     badge: 'Pro'
   }
 ];
@@ -50,6 +50,12 @@ export const ART_STYLES: ArtStyle[] = [
     name: 'Anime/Manga',
     promptModifier: 'Anime style, Studio Ghibli inspired, vibrant colors, detailed background, 2D animation',
     previewColor: 'from-pink-500 to-rose-500'
+  },
+  {
+    id: 'typography',
+    name: 'Typography',
+    promptModifier: 'Bold expressive typography, stylish artistic font design, creative lettering, text as the primary visual element, minimal abstract background, high contrast graphic design, word art, minimal illustration',
+    previewColor: 'from-yellow-400 to-orange-600'
   },
   {
     id: 'cyberpunk',
