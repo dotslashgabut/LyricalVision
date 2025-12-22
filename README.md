@@ -9,7 +9,7 @@ Lyrical Vision is a world-class AI-powered application designed to transform son
 
 | Application Workspace | Resulting Storyboard |
 | :---: | :---: |
-| ![Workspace Setup](https://placehold.co/800x450/0f172a/6366f1?text=App+Interface+Screenshot) | ![Final Results](https://placehold.co/800x450/0f172a/8b5cf6?text=Generated+Art+Screenshot) |
+| ![Workspace Setup](screenshot1.jpg) | ![Final Results](screenshot2.jpg) |
 
 ## 🚀 Key Features
 
