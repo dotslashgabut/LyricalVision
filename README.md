@@ -15,18 +15,6 @@ Lyrical Vision is a world-class AI-powered application designed to transform son
 - **Multi-Image Reference**: Upload up to 3 images to guide character and style consistency.
 - **Markdown Export**: Generate a full report of your visuals and lyrics for documentation.
 
-## 🛠️ How to Fix "Broken" Images on GitHub
-
-The "Save to GitHub" button in Google AI Studio only captures your code. It does **not** upload your local image files. To show your real screenshots here:
-
-1.  **Run the app** and take two screenshots of your work.
-2.  **Rename them** to `screenshot1.jpg` and `screenshot2.jpg`.
-3.  **Go to your GitHub Repository** in your browser.
-4.  **Click 'Add file' > 'Upload files'**.
-5.  **Drag and drop** your two `.jpg` files into the box.
-6.  **Commit the changes**.
-7.  **Update this README**: Edit the image links in the table above to use `./screenshot1.jpg` and `./screenshot2.jpg` instead of the placeholder URLs.
-
 ## 📝 Technical Setup
 
 - **AI Engine**: `@google/genai` (Gemini API)
