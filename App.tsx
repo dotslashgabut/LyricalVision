@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   const [hasSelectedKey, setHasSelectedKey] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,7 +39,17 @@ const App: React.FC = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+    
+    // Escape key to close preview
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewImage(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const toggleFullscreen = () => {
@@ -199,7 +210,6 @@ const App: React.FC = () => {
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
-              // Small delay to ensure the browser processes each download
               await new Promise(resolve => setTimeout(resolve, 300));
           }
       }
@@ -604,6 +614,7 @@ const App: React.FC = () => {
                   stanza={stanza}
                   onGenerate={handleGenerateImage}
                   onDelete={handleDeleteStanza}
+                  onZoom={setPreviewImage}
                   index={index}
                 />
               ))}
@@ -611,6 +622,52 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Full Preview Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl animate-fade-in p-4 md:p-10"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 p-3 bg-slate-800 hover:bg-slate-700 text-white rounded-full border border-slate-700 transition-all z-[110]"
+            onClick={() => setPreviewImage(null)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          <div className="relative max-w-5xl w-full max-h-full flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl border border-white/5 bg-slate-900">
+            <img 
+              src={previewImage} 
+              className="max-w-full max-h-[85vh] object-contain animate-scale-in"
+              alt="Preview"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-900/80 to-transparent flex justify-center">
+                 <button 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const link = document.createElement('a');
+                        link.href = previewImage;
+                        link.download = `lyrical-vision-export-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }}
+                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition-all"
+                 >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download High Res
+                 </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

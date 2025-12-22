@@ -5,12 +5,14 @@ interface StanzaCardProps {
   stanza: Stanza;
   onGenerate: (id: string) => void;
   onDelete: (id: string) => void;
+  onZoom: (url: string) => void;
   index: number;
 }
 
-const StanzaCard: React.FC<StanzaCardProps> = ({ stanza, onGenerate, onDelete, index }) => {
+const StanzaCard: React.FC<StanzaCardProps> = ({ stanza, onGenerate, onDelete, onZoom, index }) => {
   
-  const handleDownload = () => {
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (stanza.imageUrl) {
         const link = document.createElement('a');
         link.href = stanza.imageUrl;
@@ -90,7 +92,7 @@ const StanzaCard: React.FC<StanzaCardProps> = ({ stanza, onGenerate, onDelete, i
       </div>
 
       {/* Image Section */}
-      <div className="md:w-1/2 bg-black min-h-[300px] relative flex items-center justify-center overflow-hidden">
+      <div className="md:w-1/2 bg-black min-h-[300px] relative flex items-center justify-center overflow-hidden cursor-zoom-in" onClick={() => stanza.imageUrl && onZoom(stanza.imageUrl)}>
         {!stanza.imageUrl && !stanza.isLoading && (
             <div className="text-slate-600 flex flex-col items-center">
                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -115,10 +117,21 @@ const StanzaCard: React.FC<StanzaCardProps> = ({ stanza, onGenerate, onDelete, i
                     className={`w-full h-full object-cover transition-opacity duration-700 ${stanza.isLoading ? 'opacity-50' : 'opacity-100'}`}
                 />
                 
-                {/* Download Button */}
+                {/* Zoom Icon (Top Right) */}
+                <button
+                    onClick={(e) => { e.stopPropagation(); onZoom(stanza.imageUrl!); }}
+                    className="absolute top-4 right-4 p-2.5 bg-slate-900/60 hover:bg-purple-600 text-white rounded-full backdrop-blur-md transition-all z-20 shadow-lg border border-white/10 group-hover:scale-110 active:scale-95"
+                    title="Full Preview"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                </button>
+
+                {/* Download Button (Bottom Right) */}
                 <button
                     onClick={handleDownload}
-                    className="absolute bottom-4 right-4 p-2 bg-slate-900/60 hover:bg-purple-600 text-white rounded-full backdrop-blur-md transition-all z-20 shadow-lg border border-white/10"
+                    className="absolute bottom-4 right-4 p-2 bg-slate-900/60 hover:bg-purple-600 text-white rounded-full backdrop-blur-md transition-all z-20 shadow-lg border border-white/10 group-hover:scale-110 active:scale-95"
                     title="Download Image"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
