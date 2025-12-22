@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>('1:1');
   const [customStylePrompt, setCustomStylePrompt] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   
   const [hasSelectedKey, setHasSelectedKey] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,7 +32,23 @@ const App: React.FC = () => {
         }
     };
     checkApiKey();
+
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
 
   const handleSelectKey = async () => {
       const aistudio = (window as any).aistudio;
@@ -145,20 +162,11 @@ const App: React.FC = () => {
     }
   }, [stanzas, selectedStyleId, customStylePrompt, contextInput, subjectInput, referenceImages, selectedModelId, selectedAspectRatio, hasSelectedKey]);
 
-  const handleClear = () => {
-    setStanzas([]);
-    setLyricsInput('');
-    setContextInput('');
-    setSubjectInput('');
-    setReferenceImages([]);
-    setCustomStylePrompt('');
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 pb-20">
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 h-[65px]">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => stanzas.length > 0 && setStanzas([])}>
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
@@ -166,20 +174,44 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold text-white tracking-tight text-shadow">Lyrical Vision</h1>
           </div>
+          
           <div className="flex items-center gap-3">
              {requiresKeySelection && (
                  <button onClick={handleSelectKey} className="text-xs text-amber-400 hover:text-amber-300 font-medium px-2 py-1 rounded border border-amber-500/30 bg-amber-500/10 transition-colors">
                     ⚠ Select Pro API Key
                  </button>
              )}
-            {stanzas.length > 0 && (
+            
+            <div className="flex items-center gap-2">
+                {stanzas.length > 0 && (
+                    <button 
+                        onClick={() => setStanzas([])}
+                        className="text-xs md:text-sm font-medium text-slate-300 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-700/50 shadow-sm"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                        </svg>
+                        <span className="hidden sm:inline">Back to Editor</span>
+                        <span className="sm:hidden">Back</span>
+                    </button>
+                )}
+
                 <button 
-                    onClick={handleClear}
-                    className="text-xs md:text-sm font-medium text-slate-400 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-full"
+                  onClick={toggleFullscreen}
+                  className="p-2 text-slate-400 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 rounded-full border border-slate-700/50 shadow-sm"
+                  title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                 >
-                    New Project
+                  {isFullscreen ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0l5 0m-5 0l0 5m11 0l5-5m0 0h-5m5 0v5m-5 6l5 5m0 0h-5m5 0v-5M9 15l-5 5m0 0h5m-5 0v-5" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  )}
                 </button>
-            )}
+            </div>
           </div>
         </div>
       </header>
@@ -483,9 +515,9 @@ I believe in yesterday...`}
 
                      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
                          {referenceImages.map(img => (
-                             <div key={img.id} className="flex-shrink-0 flex items-center gap-1 bg-slate-800 border border-purple-500/30 rounded-lg px-1.5 py-0.5 shadow-sm">
-                                 <img src={`data:${img.mimeType};base64,${img.data}`} className="w-4 h-4 rounded object-cover" alt="Ref" />
-                                 <button onClick={() => removeReferenceImage(img.id)} className="text-red-400 hover:text-red-300 p-0.5">
+                             <div key={img.id} className="flex-shrink-0 flex items-center gap-1.5 bg-slate-800 border border-purple-500/30 rounded-xl px-2 py-1 shadow-sm">
+                                 <img src={`data:${img.mimeType};base64,${img.data}`} className="w-8 h-8 rounded-lg object-cover shadow-inner" alt="Ref" />
+                                 <button onClick={() => removeReferenceImage(img.id)} className="text-red-400 hover:text-red-300 p-1 bg-red-500/10 rounded-md transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                                     </svg>
@@ -493,11 +525,11 @@ I believe in yesterday...`}
                              </div>
                          ))}
                          {referenceImages.length < 3 && (
-                            <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-0.5 hover:border-slate-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-xl px-3 py-1 hover:border-slate-500 transition-colors h-10">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
-                                <span className="text-[9px] text-slate-400">Add Ref</span>
+                                <span className="text-[10px] text-slate-400 font-medium">Add Ref</span>
                             </button>
                          )}
                          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" multiple />

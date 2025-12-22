@@ -2,9 +2,11 @@
 
 Lyrical Vision is a world-class AI-powered application designed to transform song lyrics into a coherent series of visual artworks. By leveraging the **Gemini 2.5 Flash** and **3.0 Pro** models, the app ensures visual continuity across stanzas through advanced prompt engineering and multimodal references.
 
-## 🖼️ Application Screenshot
-![Lyrical Vision Screenshot](screenshot.png)
-*(Note: Please replace this placeholder with an actual screenshot of your running application to complete the documentation.)*
+## 🖼️ Application Screenshots
+
+| Editor View | Visualization View |
+| :---: | :---: |
+| ![Lyrical Vision Input Screen](screenshot1.png) | ![Lyrical Vision Result Screen](screenshot2.png) |
 
 ## ✨ Key Features
 
