@@ -6,7 +6,7 @@ Lyrical Vision is a world-class AI-powered application designed to transform son
 
 | Editor View | Visualization View |
 | :---: | :---: |
-| ![Lyrical Vision Input Screen](screenshot1.png) | ![Lyrical Vision Result Screen](screenshot2.png) |
+| ![Lyrical Vision Input Screen](screenshot1.jpg) | ![Lyrical Vision Result Screen](screenshot2.jpg) |
 
 ## ✨ Key Features
 
