@@ -189,6 +189,22 @@ const App: React.FC = () => {
     setTimeout(() => setCopyStatus('idle'), 2000);
   };
 
+  const handleDownloadAll = async () => {
+      for (const stanza of stanzas) {
+          if (stanza.imageUrl) {
+              const index = stanzas.indexOf(stanza);
+              const link = document.createElement('a');
+              link.href = stanza.imageUrl;
+              link.download = `lyrical-vision-stanza-${index + 1}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              // Small delay to ensure the browser processes each download
+              await new Promise(resolve => setTimeout(resolve, 300));
+          }
+      }
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 pb-20">
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 h-[65px]">
@@ -212,6 +228,16 @@ const App: React.FC = () => {
             <div className="flex items-center gap-2">
                 {stanzas.length > 0 && (
                     <>
+                      <button 
+                          onClick={handleDownloadAll}
+                          className="text-xs md:text-sm font-medium text-slate-300 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-700/50 shadow-sm"
+                          title="Download All Generated Images"
+                      >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          <span className="hidden sm:inline">Download All</span>
+                      </button>
                       <button 
                           onClick={copyStoryboardMarkdown}
                           className={`text-xs md:text-sm font-medium transition-all px-3 py-1.5 rounded-full flex items-center gap-1.5 border shadow-sm ${copyStatus === 'copied' ? 'bg-green-600 border-green-500 text-white' : 'bg-slate-800/50 hover:bg-slate-700 text-slate-300 border-slate-700/50'}`}
@@ -258,7 +284,7 @@ const App: React.FC = () => {
         {stanzas.length === 0 ? (
           <div className="animate-fade-in-up">
             <div className="mb-8 text-center">
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight text-shadow-lg">
                 Visualize lyrics with <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Gemini AI</span>.
               </h2>
               <p className="text-slate-400 max-w-lg mx-auto">

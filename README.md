@@ -2,34 +2,39 @@
 
 Lyrical Vision is a world-class AI-powered application designed to transform song lyrics into a coherent series of visual artworks. By leveraging the **Gemini 2.5 Flash** and **3.0 Pro** models, the app ensures visual continuity across stanzas through advanced prompt engineering and multimodal references.
 
-## 🖼️ Application Screenshots
+## 🖼️ Application Preview
 
-> **Note to Developers:** The screenshots below are linked but must be physically provided by you in your repository.
+> [!TIP]
+> **The images below are placeholders.** Because the "Save to GitHub" feature only exports code, you must manually upload your own screenshots to this repository to replace them.
 
-| Editor View | Visualization View |
+| Application Workspace | Resulting Storyboard |
 | :---: | :---: |
-| ![Lyrical Vision Input Screen](screenshot1.jpg) | ![Lyrical Vision Result Screen](screenshot2.jpg) |
+| ![Workspace Setup](https://placehold.co/800x450/0f172a/6366f1?text=App+Interface+Screenshot) | ![Final Results](https://placehold.co/800x450/0f172a/8b5cf6?text=Generated+Art+Screenshot) |
 
 ## 🚀 Key Features
 
 - **Stanza-by-Stanza Visualization**: Automatically parses lyrics into individual scenes.
 - **Visual Continuity Engine**: Define a global theme and main subject for the whole song.
 - **Multi-Image Reference**: Upload up to 3 images to guide character and style consistency.
-- **Export Storyboard**: Generate a Markdown report with all your lyrics and images in one click.
+- **Markdown Export**: Generate a full report of your visuals and lyrics for documentation.
 
-## 🛠️ How to "Save" and View on GitHub
+## 🛠️ How to Fix "Broken" Images on GitHub
 
-If you see broken images in this README, please follow these steps:
+The "Save to GitHub" button in Google AI Studio only captures your code. It does **not** upload your local image files. To show your real screenshots here:
 
-1.  **Generate your images** inside the app.
-2.  **Take a screenshot** of your screen.
-3.  **Save the file** as `screenshot1.jpg` (or `screenshot2.jpg`).
-4.  **Upload/Commit** these `.jpg` files to the root folder of your GitHub repository.
-5.  GitHub will then automatically display them in this README.
+1.  **Run the app** and take two screenshots of your work.
+2.  **Rename them** to `screenshot1.jpg` and `screenshot2.jpg`.
+3.  **Go to your GitHub Repository** in your browser.
+4.  **Click 'Add file' > 'Upload files'**.
+5.  **Drag and drop** your two `.jpg` files into the box.
+6.  **Commit the changes**.
+7.  **Update this README**: Edit the image links in the table above to use `./screenshot1.jpg` and `./screenshot2.jpg` instead of the placeholder URLs.
 
-## 📝 Exporting Results
+## 📝 Technical Setup
 
-Use the **"Copy Storyboard"** button in the app header to get a full Markdown version of your creation. You can paste this text directly into a GitHub `.md` file to showcase your generated art alongside the lyrics.
+- **AI Engine**: `@google/genai` (Gemini API)
+- **Framework**: React 19 + Tailwind CSS
+- **Model Support**: Gemini 2.5 Flash & Gemini 3.0 Pro
 
 ---
 
