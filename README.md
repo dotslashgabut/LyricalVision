@@ -4,35 +4,32 @@ Lyrical Vision is a world-class AI-powered application designed to transform son
 
 ## 🖼️ Application Screenshots
 
+> **Note to Developers:** The screenshots below are linked but must be physically provided by you in your repository.
+
 | Editor View | Visualization View |
 | :---: | :---: |
 | ![Lyrical Vision Input Screen](screenshot1.jpg) | ![Lyrical Vision Result Screen](screenshot2.jpg) |
 
-## ✨ Key Features
+## 🚀 Key Features
 
-- **Stanza-by-Stanza Visualization**: Input your song lyrics, and the app automatically parses them into individual stanzas for generation.
-- **Visual Continuity Engine**: 
-  - **Global Theme**: Define the atmosphere and environment for the entire song.
-  - **Main Subject**: Pin a character or object to remain consistent throughout the visual story.
-- **Multi-Image Reference**: Upload up to **3 reference images** (multimodal input) to guide the AI's understanding of specific characters, artistic styles, or color palettes.
-- **Curated Art Styles**: Choose from a variety of presets including Cinematic, Anime, Cyberpunk, Watercolor, and Surrealist, or define your own custom style.
-- **Wide Format Support**: Optimized for wide aspect ratios (16:9, 4:3) with a responsive `6xl` layout that showcases high-resolution generations beautifully.
-- **Pro Model Integration**: Toggle between Gemini 2.5 Flash (Standard) and Gemini 3.0 Pro (High Fidelity) for professional-grade results.
+- **Stanza-by-Stanza Visualization**: Automatically parses lyrics into individual scenes.
+- **Visual Continuity Engine**: Define a global theme and main subject for the whole song.
+- **Multi-Image Reference**: Upload up to 3 images to guide character and style consistency.
+- **Export Storyboard**: Generate a Markdown report with all your lyrics and images in one click.
 
-## 🚀 Getting Started
+## 🛠️ How to "Save" and View on GitHub
 
-1. **Input Lyrics**: Paste your favorite song lyrics into the text area.
-2. **Define Style**: Select one of the artistic presets.
-3. **Set Continuity**: Enter a "Global Theme" and "Main Subject" to ensure your story looks consistent.
-4. **Reference Images**: Upload photos or concept art to steer the visual direction.
-5. **Generate**: Hit "Start Visualizing" to create your storyboard.
+If you see broken images in this README, please follow these steps:
 
-## 🛠️ Technical Details
+1.  **Generate your images** inside the app.
+2.  **Take a screenshot** of your screen.
+3.  **Save the file** as `screenshot1.jpg` (or `screenshot2.jpg`).
+4.  **Upload/Commit** these `.jpg` files to the root folder of your GitHub repository.
+5.  GitHub will then automatically display them in this README.
 
-- **Framework**: React 19 (ES6 Modules)
-- **Styling**: Tailwind CSS
-- **AI Engine**: @google/genai (Gemini API)
-- **State Management**: React Hooks & UUID for unique stanza tracking
+## 📝 Exporting Results
+
+Use the **"Copy Storyboard"** button in the app header to get a full Markdown version of your creation. You can paste this text directly into a GitHub `.md` file to showcase your generated art alongside the lyrics.
 
 ---
 

@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [customStylePrompt, setCustomStylePrompt] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   
   const [hasSelectedKey, setHasSelectedKey] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,6 @@ const App: React.FC = () => {
       const aistudio = (window as any).aistudio;
       if (aistudio && aistudio.openSelectKey) {
           await aistudio.openSelectKey();
-          // Assume the key selection was successful after triggering openSelectKey() to mitigate race conditions
           setHasSelectedKey(true);
       }
   };
@@ -162,6 +162,33 @@ const App: React.FC = () => {
     }
   }, [stanzas, selectedStyleId, customStylePrompt, contextInput, subjectInput, referenceImages, selectedModelId, selectedAspectRatio, hasSelectedKey]);
 
+  const copyStoryboardMarkdown = () => {
+    const style = ART_STYLES.find(s => s.id === selectedStyleId);
+    const model = IMAGE_MODELS.find(m => m.id === selectedModelId);
+    
+    let md = `# Lyrical Vision Storyboard\n\n`;
+    md += `**Style:** ${style?.name}${selectedStyleId === 'custom' ? ` (${customStylePrompt})` : ''}\n`;
+    md += `**Model:** ${model?.name}\n`;
+    md += `**Context:** ${contextInput || 'None'}\n`;
+    md += `**Subject:** ${subjectInput || 'None'}\n\n`;
+    md += `---\n\n`;
+
+    stanzas.forEach((s, i) => {
+      md += `### Stanza ${i + 1}\n\n`;
+      md += `> ${s.text.replace(/\n/g, '\n> ')}\n\n`;
+      if (s.imageUrl) {
+        md += `![Visualization ${i + 1}](${s.imageUrl})\n\n`;
+      } else {
+        md += `*No image generated for this stanza.*\n\n`;
+      }
+      md += `---\n\n`;
+    });
+
+    navigator.clipboard.writeText(md);
+    setCopyStatus('copied');
+    setTimeout(() => setCopyStatus('idle'), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 pb-20">
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50 h-[65px]">
@@ -184,16 +211,27 @@ const App: React.FC = () => {
             
             <div className="flex items-center gap-2">
                 {stanzas.length > 0 && (
-                    <button 
-                        onClick={() => setStanzas([])}
-                        className="text-xs md:text-sm font-medium text-slate-300 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-700/50 shadow-sm"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
-                        </svg>
-                        <span className="hidden sm:inline">Back to Editor</span>
-                        <span className="sm:hidden">Back</span>
-                    </button>
+                    <>
+                      <button 
+                          onClick={copyStoryboardMarkdown}
+                          className={`text-xs md:text-sm font-medium transition-all px-3 py-1.5 rounded-full flex items-center gap-1.5 border shadow-sm ${copyStatus === 'copied' ? 'bg-green-600 border-green-500 text-white' : 'bg-slate-800/50 hover:bg-slate-700 text-slate-300 border-slate-700/50'}`}
+                      >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                          </svg>
+                          <span>{copyStatus === 'copied' ? 'Copied MD!' : 'Copy Storyboard'}</span>
+                      </button>
+                      <button 
+                          onClick={() => setStanzas([])}
+                          className="text-xs md:text-sm font-medium text-slate-300 hover:text-white transition-colors bg-slate-800/50 hover:bg-slate-700 px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-700/50 shadow-sm"
+                      >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                          </svg>
+                          <span className="hidden sm:inline">Reset</span>
+                          <span className="sm:hidden">Back</span>
+                      </button>
+                    </>
                 )}
 
                 <button 
@@ -221,7 +259,7 @@ const App: React.FC = () => {
           <div className="animate-fade-in-up">
             <div className="mb-8 text-center">
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
-                Visualize lyrics with <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Gemini Flash</span>.
+                Visualize lyrics with <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">Gemini AI</span>.
               </h2>
               <p className="text-slate-400 max-w-lg mx-auto">
                 Maintain visual consistency across an entire song by defining a global theme, main subject, and multiple reference images.
@@ -382,7 +420,7 @@ const App: React.FC = () => {
                     <div className="col-span-4 mt-1">
                         <p className="text-[10px] text-slate-500 leading-tight italic bg-slate-900/30 p-2 rounded-lg border border-slate-700/50">
                            <span className="text-purple-400 font-bold uppercase mr-1">Tip:</span> 
-                           Upload multiple images to synthesize a unique style or character. For example: Image 1 for face, Image 2 for costume, Image 3 for art medium.
+                           Upload multiple images to synthesize a unique style or character.
                         </p>
                     </div>
                  </div>
@@ -404,11 +442,7 @@ const App: React.FC = () => {
                 <textarea
                   value={lyricsInput}
                   onChange={(e) => setLyricsInput(e.target.value)}
-                  placeholder={`Verse 1:
-Yesterday all my troubles seemed so far away
-
-Chorus:
-I believe in yesterday...`}
+                  placeholder={`Verse 1:\nYesterday all my troubles seemed so far away\n\nChorus:\nI believe in yesterday...`}
                   className="w-full h-40 bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-sm leading-relaxed resize-y shadow-inner"
                 />
               </div>
@@ -427,7 +461,7 @@ I believe in yesterday...`}
                  <button
                     onClick={handleProcessLyrics}
                     disabled={!lyricsInput.trim() || isProcessing}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-purple-900/30"
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-xl shadow-purple-900/30"
                  >
                     Start Visualizing
                  </button>
@@ -534,13 +568,6 @@ I believe in yesterday...`}
                          )}
                          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" multiple />
                      </div>
-                     
-                     {requiresKeySelection && (
-                         <div className="bg-amber-900/30 border border-amber-500/30 rounded p-2 flex items-center justify-between shadow-inner">
-                            <span className="text-[10px] text-amber-200">Gemini Pro requires a paid key.</span>
-                            <button onClick={handleSelectKey} className="text-[9px] bg-amber-600 hover:bg-amber-500 text-white px-2 py-0.5 rounded transition-colors">Select Key</button>
-                         </div>
-                     )}
                 </div>
              </div>
 
@@ -554,10 +581,6 @@ I believe in yesterday...`}
                   index={index}
                 />
               ))}
-            </div>
-            
-            <div className="text-center text-slate-500 text-[10px] mt-12 pb-8 uppercase tracking-widest font-semibold opacity-50">
-                Generated with {IMAGE_MODELS.find(m => m.id === selectedModelId)?.name} • {selectedAspectRatio} • {stanzas.length} Stanzas
             </div>
           </div>
         )}
