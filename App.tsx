@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   
   const [hasSelectedKey, setHasSelectedKey] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +41,6 @@ const App: React.FC = () => {
     };
     document.addEventListener('fullscreenchange', handleFsChange);
     
-    // Escape key to close preview
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setPreviewImage(null);
     };
@@ -70,21 +70,51 @@ const App: React.FC = () => {
       }
   };
 
+  const processFiles = (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    
+    fileArray.forEach((file: File) => {
+      if (!file.type.startsWith('image/')) return;
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        setReferenceImages(prev => {
+          if (prev.length >= 3) return prev;
+          return [...prev, { data: base64, mimeType: file.type, id: uuidv4() }];
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      Array.from(files).forEach((file: File) => {
-        if (referenceImages.length >= 3) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          setReferenceImages(prev => [
-            ...prev, 
-            { data: base64, mimeType: file.type, id: uuidv4() }
-          ].slice(0, 3));
-        };
-        reader.readAsDataURL(file);
-      });
+      processFiles(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (referenceImages.length < 3) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (referenceImages.length >= 3) return;
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      processFiles(files);
     }
   };
 
@@ -417,12 +447,26 @@ const App: React.FC = () => {
                  </div>
               </div>
 
-              <div>
+              <div 
+                className={`transition-all duration-300 p-4 rounded-2xl relative ${isDragging ? 'bg-purple-500/10 border-2 border-dashed border-purple-500 ring-4 ring-purple-500/20' : 'border border-transparent'}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                  <label className="block text-slate-300 text-sm font-semibold mb-2 flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-[10px]">5</span>
-                    Reference Images (Up to 3)
+                    Reference Images (Up to 3) - Drag & Drop Supported
                  </label>
-                 <div className="grid grid-cols-4 gap-4 items-start">
+                 
+                 {isDragging && (
+                   <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                     <div className="bg-purple-600 text-white px-4 py-2 rounded-full font-bold shadow-2xl animate-bounce">
+                        Drop to Upload
+                     </div>
+                   </div>
+                 )}
+
+                 <div className="grid grid-cols-4 gap-4 items-start relative z-0">
                     {referenceImages.map((img) => (
                         <div key={img.id} className="relative group aspect-square">
                             <img 
@@ -444,19 +488,19 @@ const App: React.FC = () => {
                     {referenceImages.length < 3 && (
                         <button 
                             onClick={() => fileInputRef.current?.click()}
-                            className="aspect-square border-2 border-dashed border-slate-700 hover:border-purple-500/50 hover:bg-slate-700/30 rounded-xl p-2 transition-all flex flex-col items-center justify-center gap-1 group overflow-hidden"
+                            className={`aspect-square border-2 border-dashed rounded-xl p-2 transition-all flex flex-col items-center justify-center gap-1 group overflow-hidden ${isDragging ? 'border-purple-400 bg-purple-500/10' : 'border-slate-700 hover:border-purple-500/50 hover:bg-slate-700/30'}`}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-500 group-hover:text-purple-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 transition-colors ${isDragging ? 'text-purple-400' : 'text-slate-500 group-hover:text-purple-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            <span className="text-[10px] text-slate-500 font-medium">Add Image</span>
+                            <span className={`text-[10px] font-medium ${isDragging ? 'text-purple-400' : 'text-slate-500'}`}>Add Image</span>
                         </button>
                     )}
                     
                     <div className="col-span-4 mt-1">
                         <p className="text-[10px] text-slate-500 leading-tight italic bg-slate-900/30 p-2 rounded-lg border border-slate-700/50">
                            <span className="text-purple-400 font-bold uppercase mr-1">Tip:</span> 
-                           Upload multiple images to synthesize a unique style or character.
+                           Drag and drop images directly into this area to synthesize a unique style or character.
                         </p>
                     </div>
                  </div>
