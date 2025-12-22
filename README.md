@@ -4,9 +4,6 @@ Lyrical Vision is a world-class AI-powered application designed to transform son
 
 ## 🖼️ Application Preview
 
-> [!TIP]
-> **The images below are placeholders.** Because the "Save to GitHub" feature only exports code, you must manually upload your own screenshots to this repository to replace them.
-
 | Application Workspace | Resulting Storyboard |
 | :---: | :---: |
 | ![Workspace Setup](screenshot1.jpg) | ![Final Results](screenshot2.jpg) |
